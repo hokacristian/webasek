@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grafik dan Laporan | Rice Moisture Monitoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Open Sans, sans-serif;
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #2e2e2e;
+    }
+
+    .background-wrapper, .overlay {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .background-wrapper {
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      z-index: -2;
+    }
+    .overlay { background-color: rgba(255,255,255,0.4); }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      transition: margin-left 0.3 ease;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #a58b21;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      font-family: 'Open Sans', sans-serif;
+      transition: width 0.3s;
+    }
+
+    .sidebar.collapsed {
+      width: 100px;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      margin-bottom: 20px;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .logo-img {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .sidebar.collapsed .logo-img {
+      display: none;
+    }
+
+    .sidebar.collapsed a {
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+    }
+
+    .sidebar.collapsed a span {
+      display: none;
+    }
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #4d0f0f;
+      border-radius: 20px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .sidebar a span {
+      font-size: 16px;
+      display: inline-block;
+    }
+
+    .sidebar a:hover, .sidebar a.active {
+      background-color: #a03030;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+      transition: margin-left 0.3s;
+    }
+    .collapsed + .main-content { margin-left: 60px;}
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header .user-info {
+      text-align: right;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .header h1 {
+      font-size: 35px;
+      color: #1f1f1f;
+      margin-top: 1px;
+      margin-bottom: 10px;
+
+    }
+
+    .grafik-title {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 35px;
+      color: #5c1212;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+    }
+
+    .chart-container {
+      margin-top: 10px;
+      background-color: rgba(255,255,255,0.9);
+      padding: 30px;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+      overflow-x:auto;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    .chart-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .chart-buttons button {
+      padding: 10px 20px;
+      background-color: #4d0f0f;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .chart-buttons button:hover {
+      background-color: #a03030;
+    }
+
+    .connection-status {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+
+    .connection-status.connected {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .connection-status.disconnected {
+      background-color: #f44336;
+      color: white;
+    }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        overflow-x: auto;
+      }
+
+      .sidebar.collapsed {
+        width: 100% !important;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+<!-- WRAPPER BACKGROUND -->
+  <div class="background-wrapper">
+    <div class="overlay"></div>
+  </div>
+
+  <!-- Connection Status -->
+  <div id="connectionStatus" class="connection-status disconnected">❌ Disconnected</div>
+
+  <div class="container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button> 
+      <img src="ricemoisturefix.png" alt="Logo" class="logo-img" />
+    </div>
+      <a href="2home.html">🏠<span> Beranda</span></a>
+      <a href="3datasensor.html">📊<span> Data Sensor</span></a>
+      <a href="4monitoring.html">📡<span> Monitoring Langsung</span></a>
+      <a href="5grafik.html" class="active">📈<span> Grafik dan Laporan</span></a>
+      <a href="6tentang-1.html">ℹ️<span> Tentang</span></a>
+      <a href="1login.html">🚪<span> Keluar</span></a>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1>Sistem Pengukuran Kadar Air Beras</h1>
+        <div class="user-info">
+          <p><strong id="userNameDisplay">Memuat...</strong></p>
+        </div>
+      </div>
+
+      <div class="grafik-title">Grafik dan Laporan</div>
+
+      <div class="chart-container">
+        <canvas id="moistureChart"></canvas>
+        <div class="chart-buttons">
+          <button onclick="updateChart()">
+		  <img src="refreshlogo.png" alt="Perbarui" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;">
+		  Perbarui Data
+		</button>
+
+		<button onclick="window.print()">
+		  <img src="unduhlogo.png" alt="Unduh" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;">
+		  Unduh PDF
+		</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // KONFIGURASI NANOVNA BACKEND
+    // =====================================================
+    
+    const NANOVNA_BACKEND_URL = 'http://localhost:3000';
+    let isConnected = false;
+    
+    // =====================================================
+    // CHART INITIALIZATION
+    // =====================================================
+    
+    const ctx = document.getElementById('moistureChart').getContext('2d');
+    const moistureChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Rata-rata Kadar Air Harian (%)',
+          data: [],
+          backgroundColor: '#807000',
+          borderRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 3,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 20,
+            ticks: {
+              callback: value => value + '%'
+            }
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Grafik Rata-rata Kadar Air Per Hari'
+          },
+          legend: {
+            display: true
+          }
+        }
+      }
+    });
+
+    // =====================================================
+    // CONNECTION STATUS FUNCTIONS
+    // =====================================================
+    
+    function updateConnectionStatus(status) {
+      const statusElement = document.getElementById('connectionStatus');
+      if (status) {
+        statusElement.textContent = '✅ Connected to NanoVNA Backend';
+        statusElement.className = 'connection-status connected';
+      } else {
+        statusElement.textContent = '❌ Disconnected from NanoVNA Backend';
+        statusElement.className = 'connection-status disconnected';
+      }
+    }
+    
+    // =====================================================
+    // DATA FETCHING FUNCTIONS
+    // =====================================================
+    
+    async function loadChartData() {
+      try {
+        console.log('🔄 Loading chart data from NanoVNA backend...');
+        
+        const response = await fetch(`${NANOVNA_BACKEND_URL}/api/water-content-history?limit=50`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        isConnected = true;
+        updateConnectionStatus(true);
+        
+        if (result.success && result.data && result.data.length > 0) {
+          // Process data for chart
+          const chartData = processDataForChart(result.data);
+          updateChartDisplay(chartData);
+          
+          console.log(`✅ Loaded ${result.data.length} data points for chart`);
+        } else {
+          console.log('ℹ️ No historical data available, showing sample data');
+          showSampleData();
+        }
+        
+      } catch (error) {
+        console.error('❌ Error loading chart data:', error);
+        isConnected = false;
+        updateConnectionStatus(false);
+        console.log('🔄 Showing sample data due to connection error');
+        showSampleData();
+      }
+    }
+    
+    function processDataForChart(data) {
+      // Group data by date and calculate daily averages
+      const dailyData = {};
+      
+      data.forEach(item => {
+        const date = new Date(item.timestamp);
+        const dateKey = date.toLocaleDateString('id-ID', { 
+          day: '2-digit', 
+          month: '2-digit',
+          year: 'numeric'
+        });
+        
+        if (!dailyData[dateKey]) {
+          dailyData[dateKey] = {
+            total: 0,
+            count: 0,
+            readings: []
+          };
+        }
+        
+        const moistureValue = parseFloat(item.water_content_percent);
+        dailyData[dateKey].total += moistureValue;
+        dailyData[dateKey].count += 1;
+        dailyData[dateKey].readings.push(moistureValue);
+      });
+      
+      // Calculate averages and sort by date
+      const processedData = Object.keys(dailyData).map(dateKey => {
+        const dayData = dailyData[dateKey];
+        const average = dayData.total / dayData.count;
+        
+        return {
+          date: dateKey,
+          average: parseFloat(average.toFixed(1)),
+          count: dayData.count,
+          readings: dayData.readings
+        };
+      }).sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Take last 7 days for better visualization
+      const recentDays = processedData.slice(-7);
+      
+      const labels = recentDays.map(item => {
+        // Format to show only day/month
+        const [day, month] = item.date.split('/');
+        return `${day}/${month}`;
+      });
+      
+      const values = recentDays.map(item => item.average);
+      const counts = recentDays.map(item => item.count);
+      
+      return { labels, values, counts, dailyData: recentDays };
+    }
+    
+    function updateChartDisplay(chartData) {
+      moistureChart.data.labels = chartData.labels;
+      moistureChart.data.datasets[0].data = chartData.values;
+      
+      // Update colors based on moisture content ranges
+      moistureChart.data.datasets[0].backgroundColor = chartData.values.map(value => {
+        if (value >= 12 && value <= 14) {
+          return '#4CAF50'; // Green for normal range
+        } else if (value > 14) {
+          return '#f44336'; // Red for too high
+        } else {
+          return '#FF9800'; // Orange for too low
+        }
+      });
+      
+      // Update tooltip to show daily average details
+      moistureChart.options.plugins.tooltip = {
+        callbacks: {
+          title: function(context) {
+            const index = context[0].dataIndex;
+            const dayData = chartData.dailyData[index];
+            return `Tanggal: ${dayData.date}`;
+          },
+          label: function(context) {
+            const index = context.dataIndex;
+            const dayData = chartData.dailyData[index];
+            const value = context.parsed.y;
+            return [
+              `Rata-rata Harian: ${value}%`,
+              `Jumlah Pengukuran: ${dayData.count} kali`,
+              `Status: ${value >= 12 && value <= 14 ? 'Normal' : 'Tidak Normal'}`
+            ];
+          }
+        }
+      };
+      
+      moistureChart.update('active');
+      
+      // Update chart title with overall average
+      if (chartData.values.length > 0) {
+        const overallAvg = (chartData.values.reduce((a, b) => a + b, 0) / chartData.values.length).toFixed(1);
+        const totalReadings = chartData.counts.reduce((a, b) => a + b, 0);
+        moistureChart.options.plugins.title.text = `Grafik Rata-rata Kadar Air Per Hari - Rata-rata ${chartData.values.length} Hari: ${overallAvg}% (${totalReadings} pengukuran)`;
+      } else {
+        moistureChart.options.plugins.title.text = 'Grafik Rata-rata Kadar Air Per Hari - Tidak Ada Data';
+      }
+      moistureChart.update('none');
+    }
+    
+    function showSampleData() {
+      // Sample data untuk tampilan default
+      const sampleData = {
+        labels: ['25/12', '26/12', '27/12', '28/12', '29/12', '30/12', '31/12'],
+        values: [13.2, 14.1, 12.8, 15.3, 13.7, 12.9, 14.2],
+        counts: [8, 12, 6, 10, 9, 7, 11],
+        dailyData: [
+          { date: '25/12/2024', average: 13.2, count: 8 },
+          { date: '26/12/2024', average: 14.1, count: 12 },
+          { date: '27/12/2024', average: 12.8, count: 6 },
+          { date: '28/12/2024', average: 15.3, count: 10 },
+          { date: '29/12/2024', average: 13.7, count: 9 },
+          { date: '30/12/2024', average: 12.9, count: 7 },
+          { date: '31/12/2024', average: 14.2, count: 11 }
+        ]
+      };
+      
+      updateChartDisplay(sampleData);
+      moistureChart.options.plugins.title.text = 'Grafik Rata-rata Kadar Air Per Hari - Data Contoh';
+      moistureChart.update('none');
+    }
+    
+    function showNoDataMessage() {
+      moistureChart.data.labels = ['No Data'];
+      moistureChart.data.datasets[0].data = [0];
+      moistureChart.data.datasets[0].backgroundColor = ['#ccc'];
+      moistureChart.options.plugins.title.text = 'Grafik Rata-rata Kadar Air Per Hari - Tidak Ada Data';
+      moistureChart.update();
+    }
+    
+    function showErrorMessage(error) {
+      moistureChart.data.labels = ['Error'];
+      moistureChart.data.datasets[0].data = [0];
+      moistureChart.data.datasets[0].backgroundColor = ['#f44336'];
+      moistureChart.options.plugins.title.text = `Grafik Rata-rata Kadar Air Per Hari - Error: ${error}`;
+      moistureChart.update();
+    }
+    
+    async function updateChart() {
+      const button = event.target.closest('button');
+      const originalText = button.innerHTML;
+      
+      // Show loading state
+      button.innerHTML = '🔄 Memperbarui...';
+      button.disabled = true;
+      
+      try {
+        await loadChartData();
+      } finally {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+      }
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const container = document.querySelector('.container');
+      sidebar.classList.toggle('collapsed');
+      container.classList.toggle('sidebar-collapsed');
+
+      localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+    }
+
+    // =====================================================
+    // INITIALIZATION
+    // =====================================================
+    
+    window.addEventListener('load', () => {
+      console.log('🚀 Initializing chart page...');
+      
+      // Check if sidebar was collapsed previously
+      if (localStorage.getItem('sidebar-collapsed') === 'true') {
+        const sidebar = document.getElementById('sidebar');
+        const container = document.querySelector('.container');
+        sidebar.classList.add('collapsed');
+        container.classList.add('sidebar-collapsed');
+      }
+      
+      // Show sample data immediately, then try to load real data
+      showSampleData();
+      
+      // Load real chart data after a short delay
+      setTimeout(() => {
+        loadChartData();
+      }, 1000);
+      
+      // Auto-refresh chart every 60 seconds
+      setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          loadChartData();
+        }
+      }, 60000);
+      
+      // Test connection periodically
+      setInterval(async () => {
+        try {
+          const response = await fetch(`${NANOVNA_BACKEND_URL}/api/realtime-water-content`);
+          updateConnectionStatus(response.ok);
+        } catch (error) {
+          updateConnectionStatus(false);
+        }
+      }, 10000);
+    });    
+  </script>
+  <script type="module">
+  import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAzSUI6ofOyN9hy2oNAqr2sukG8G4YngbM",
+    authDomain: "tugasakhirr-8bd0a.firebaseapp.com",
+    projectId: "tugasakhirr-8bd0a",
+    storageBucket: "tugasakhirr-8bd0a.appspot.com",
+    messagingSenderId: "1073743837170",
+    appId: "1:1073743837170:web:2e5a419331d95dd2d79d6b",
+    measurementId: "G-J5TQS4TKME"
+  };
+
+  // Cek apakah sudah ada instance Firebase yang aktif
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      console.log("User logged in:", user.uid);
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        console.log("User data:", data);
+
+        document.getElementById("userNameDisplay").textContent = data.nama || "User";
+        
+        
+      } else {
+        alert("Data pengguna tidak ditemukan di Firestore.");
+      }
+    } else {
+      console.log("Tidak ada user login. Redirect ke login.");
+      window.location.href = "1login.html";
+    }
+  });
+</script>
+<script type="module" src="js/firebaseconfig.js"></script>
+</body>
+</html>

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data Sensor | Rice Moisture Monitoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+          box-sizing: border-box;
+        }
+
+    body {
+      margin: 0;
+      font-family: Open Sans, sans-serif;
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #2e2e2e;
+    }
+
+    .background-wrapper, .overlay {
+      position: fixed;
+      width: 100%;
+      height: 100%; 
+      z-index: -1;
+    }
+
+    .background-wrapper {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      z-index: -2;
+    }
+
+    .overlay {background-color: rgba(255, 255, 255, 0.4);}
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      transition: margin-left 0.3 ease;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #a58b21;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      transition: width 0.3s;
+    }
+
+    .sidebar.collapsed {
+      width: 100px;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      margin-bottom: 20px;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .logo-img {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .sidebar.collapsed .logo-img {
+      display: none;
+    }
+
+    .sidebar.collapsed a {
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+    }
+
+    .sidebar.collapsed a span {
+      display: none;
+    }  
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #4d0f0f;
+      border-radius: 20px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+    }
+    
+    .sidebar a span{
+      font-size: 16px;
+      display: inline-block;
+    }
+
+    .sidebar a:hover, .sidebar a.active {
+      background-color: #a03030;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+      transition: margin-left 0.3s;
+    }
+
+    .collapsed + .main-content { margin-left: 60px; }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header .user-info {
+      text-align: right;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .header h1 {
+      font-size: 35px;
+      color: #1f1f1f;
+      margin-bottom: 10px;
+      margin-top: 1px
+    }
+
+    .sensor-title {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 35px;
+      color: #5c1212;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+    }
+
+    .table-container {
+      margin-top: 10px;
+      background-color: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+      overflow-x: auto;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+
+    table thead {
+      background-color: #a58b21;
+      color: white;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 16px;
+    }
+
+    table th, table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .search-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .search-bar input {
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      width: 200px;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .buttons button {
+      background-color: #4d0f0f;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+      transition: background-color 0.3s ease;
+    }
+
+    .buttons button:hover {
+      background-color: #a03030;
+    }
+
+    .buttons button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+
+    .status-normal {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+
+    .status-tidak-normal {
+      color: #f44336;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-style: italic;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+      align-items: center;
+    }
+
+    .pagination button {
+      background-color: #4d0f0f;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background-color: #a03030;
+    }
+
+    .pagination button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .pagination .page-info {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .info-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #666;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .connection-status {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1000;
+    }
+
+    .connection-status.connected {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .connection-status.disconnected {
+      background-color: #f44336;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        overflow-x: auto;
+      }
+
+      .sidebar.collapsed {
+        width: 100% !important;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+
+      .search-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-bar input {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+
+      .buttons {
+        justify-content: center;
+      }
+
+      .connection-status {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin: 10px 0;
+        text-align: center;
+      }
+    }
+    
+  </style>
+</head>
+<body>
+ <!-- WRAPPER BACKGROUND --> 
+  <div class="background-wrapper">
+    <div class="overlay"></div>
+  </div>
+
+  <!-- Connection Status -->
+  <div id="connectionStatus" class="connection-status disconnected">❌ Offline</div>
+
+  <div class="container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="toggle-btn" onclick="toggleSidebar()">☰</button> 
+        <img src="ricemoisturefix.png" alt="Logo" class="logo-img" />
+      </div>
+      <a href="2home.html">🏠<span> Beranda</span></a>
+      <a href="3datasensor.html"class="active">📊<span> Data Sensor</span></a>
+      <a href="4monitoring.html">📡<span> Monitoring Langsung</span></a>
+      <a href="5grafik.html">📈<span> Grafik dan Laporan</span></a>
+      <a href="6tentang-1.html">ℹ️<span> Tentang</span></a>
+      <a href="1login.html">🚪<span> Keluar</span></a>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1>Sistem Pengukuran Kadar Air Beras</h1>
+        <div class="user-info">
+        <p><strong id="userNameDisplay">Memuat...</strong></p>
+      </div>
+      </div>
+
+      <div class="sensor-title">Data Sensor</div>
+
+      <div class="table-container">
+        <div class="info-stats">
+          <div>
+            <span id="totalDataInfo">Total: 0 data</span>
+          </div>
+          <div>
+            <span id="lastUpdateInfo">Terakhir update: --</span>
+          </div>
+        </div>
+
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Pencarian berdasarkan tanggal, status..." onkeyup="searchData()">
+          <div class="buttons">
+            <button id="btnRefresh" onclick="loadHistoryData()">🔄 Perbarui Data</button>
+            <button onclick="downloadPDF()">📄 Unduh PDF</button>
+            <button onclick="clearAllData()">🗑️ Hapus Semua</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Tanggal Pengukuran</th>
+              <th>Waktu Pengukuran</th>
+              <th>Nilai Kadar Air (%)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="dataTable">
+            <tr class="loading">
+              <td colspan="5">🔄 Memuat data...</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <button id="btnPrevPage" onclick="changePage(-1)" disabled>← Sebelumnya</button>
+          <span class="page-info" id="pageInfo">Halaman 1</span>
+          <button id="btnNextPage" onclick="changePage(1)" disabled>Selanjutnya →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let allHistoryData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    const NANOVNA_BACKEND_URL = 'http://localhost:3000';
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const container = document.querySelector('.container');
+      sidebar.classList.toggle('collapsed');
+      container.classList.toggle('sidebar-collapsed');
+    }
+
+    // Update connection status
+    function updateConnectionStatus(isOnline) {
+      const statusElement = document.getElementById('connectionStatus');
+      if (isOnline) {
+        statusElement.textContent = '✅ Connected to NanoVNA Backend';
+        statusElement.className = 'connection-status connected';
+      } else {
+        statusElement.textContent = '❌ Disconnected from NanoVNA Backend';
+        statusElement.className = 'connection-status disconnected';
+      }
+    }
+
+    // Load history data from NanoVNA backend
+    async function loadHistoryData() {
+      const btnRefresh = document.getElementById('btnRefresh');
+      const tableBody = document.getElementById('dataTable');
+      
+      btnRefresh.disabled = true;
+      btnRefresh.textContent = '🔄 Memuat...';
+      
+      tableBody.innerHTML = '<tr class="loading"><td colspan="5">🔄 Memuat data...</td></tr>';
+
+      try {
+        const response = await fetch(`${NANOVNA_BACKEND_URL}/api/water-content-history?limit=100`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        updateConnectionStatus(true);
+        
+        if (result.success && result.data) {
+          // Convert NanoVNA data format to expected format
+          allHistoryData = result.data.map(item => ({
+            timestamp: item.timestamp,
+            kadarAir: item.water_content_percent,
+            status: (item.water_content_percent >= 12 && item.water_content_percent <= 14) ? 'normal' : 'tidak_normal'
+          }));
+          
+          filteredData = [...allHistoryData];
+          
+          updateDataInfo();
+          displayData();
+          
+          console.log(`✅ Loaded ${result.data.length} NanoVNA history records`);
+        } else {
+          throw new Error(result.message || 'Data tidak valid');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error loading NanoVNA data:', error);
+        updateConnectionStatus(false);
+        
+        tableBody.innerHTML = `
+          <tr class="no-data">
+            <td colspan="5">❌ Gagal memuat data: ${error.message}</td>
+          </tr>
+        `;
+      } finally {
+        btnRefresh.disabled = false;
+        btnRefresh.textContent = '🔄 Perbarui Data';
+      }
+    }
+
+    // Display data in table
+    function displayData() {
+      const tableBody = document.getElementById('dataTable');
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const dataToShow = filteredData.slice(startIndex, endIndex);
+
+      if (dataToShow.length === 0) {
+        tableBody.innerHTML = '<tr class="no-data"><td colspan="5">📋 Tidak ada data untuk ditampilkan</td></tr>';
+        updatePagination();
+        return;
+      }
+
+      const rows = dataToShow.map((item, index) => {
+        const timestamp = new Date(item.timestamp);
+        const tanggal = timestamp.toLocaleDateString('id-ID');
+        const waktu = timestamp.toLocaleTimeString('id-ID');
+        const statusClass = item.status === 'normal' ? 'status-normal' : 'status-tidak-normal';
+        const statusText = item.status === 'normal' ? 'Normal' : 'Tidak Normal';
+        const globalIndex = startIndex + index + 1;
+
+        return `
+          <tr>
+            <td>${globalIndex}</td>
+            <td>${tanggal}</td>
+            <td>${waktu}</td>
+            <td>${item.kadarAir}%</td>
+            <td class="${statusClass}">${statusText}</td>
+          </tr>
+        `;
+      }).join('');
+
+      tableBody.innerHTML = rows;
+      updatePagination();
+    }
+
+    // Update pagination controls
+    function updatePagination() {
+      const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+      const pageInfo = document.getElementById('pageInfo');
+      const btnPrev = document.getElementById('btnPrevPage');
+      const btnNext = document.getElementById('btnNextPage');
+
+      pageInfo.textContent = `Halaman ${currentPage} dari ${totalPages || 1}`;
+      btnPrev.disabled = currentPage <= 1;
+      btnNext.disabled = currentPage >= totalPages;
+    }
+
+    // Change page
+    function changePage(direction) {
+      const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+      const newPage = currentPage + direction;
+      
+      if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        displayData();
+      }
+    }
+
+    // Search functionality
+    function searchData() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      
+      if (searchTerm.trim() === '') {
+        filteredData = [...allHistoryData];
+      } else {
+        filteredData = allHistoryData.filter(item => {
+          const timestamp = new Date(item.timestamp);
+          const tanggal = timestamp.toLocaleDateString('id-ID');
+          const waktu = timestamp.toLocaleTimeString('id-ID');
+          const status = item.status === 'normal' ? 'normal' : 'tidak normal';
+          
+          return (
+            tanggal.toLowerCase().includes(searchTerm) ||
+            waktu.toLowerCase().includes(searchTerm) ||
+            item.kadarAir.toString().includes(searchTerm) ||
+            status.includes(searchTerm)
+          );
+        });
+      }
+      
+      currentPage = 1;
+      updateDataInfo();
+      displayData();
+    }
+
+    // Update data info
+    function updateDataInfo() {
+      const totalDataInfo = document.getElementById('totalDataInfo');
+      const lastUpdateInfo = document.getElementById('lastUpdateInfo');
+      
+      totalDataInfo.textContent = `Total: ${filteredData.length} data`;
+      
+      if (allHistoryData.length > 0) {
+        const latestData = allHistoryData[0];
+        const lastUpdate = new Date(latestData.timestamp).toLocaleString('id-ID');
+        lastUpdateInfo.textContent = `Terakhir update: ${lastUpdate}`;
+      } else {
+        lastUpdateInfo.textContent = 'Terakhir update: --';
+      }
+    }
+
+    // Download PDF functionality
+    async function downloadPDF() {
+      if (filteredData.length === 0) {
+        alert('Tidak ada data untuk diunduh');
+        return;
+      }
+
+      try {
+        // Simple implementation - in real app, you'd use a PDF library
+        const dataString = filteredData.map((item, index) => {
+          const timestamp = new Date(item.timestamp);
+          const tanggal = timestamp.toLocaleDateString('id-ID');
+          const waktu = timestamp.toLocaleTimeString('id-ID');
+          const status = item.status === 'normal' ? 'Normal' : 'Tidak Normal';
+          
+          return `${index + 1}. ${tanggal} ${waktu} - ${item.kadarAir}% (${status})`;
+        }).join('\n');
+
+        const blob = new Blob([`Data Sensor Kadar Air Beras\n\n${dataString}`], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `data-sensor-${new Date().toISOString().split('T')[0]}.txt`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        console.log('📄 Data exported successfully');
+      } catch (error) {
+        console.error('❌ Error downloading PDF:', error);
+        alert('Gagal mengunduh data');
+      }
+    }
+
+    // Clear all data
+    async function clearAllData() {
+      if (!confirm('Yakin ingin menghapus semua data history? Tindakan ini tidak dapat dibatalkan.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${NANOVNA_BACKEND_URL}/api/water-content-history`, {
+          method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          allHistoryData = [];
+          filteredData = [];
+          currentPage = 1;
+          updateDataInfo();
+          displayData();
+          alert('✅ Semua data berhasil dihapus');
+          console.log('🗑️ All NanoVNA history data cleared');
+        } else {
+          throw new Error(result.message || 'Gagal menghapus data');
+        }
+      } catch (error) {
+        console.error('❌ Error clearing NanoVNA data:', error);
+        alert(`Gagal menghapus data: ${error.message}`);
+      }
+    }
+
+    // Initialize page
+    window.addEventListener('load', () => {
+      // Load data after a short delay to ensure Firebase auth is ready
+      setTimeout(() => {
+        loadHistoryData();
+      }, 1000);
+
+      // Auto-refresh every 30 seconds
+      setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          loadHistoryData();
+        }
+      }, 30000);
+    });
+
+    // Test NanoVNA connection periodically
+    setInterval(async () => {
+      try {
+        const response = await fetch(`${NANOVNA_BACKEND_URL}/api/realtime-water-content`);
+        updateConnectionStatus(response.ok);
+      } catch (error) {
+        updateConnectionStatus(false);
+      }
+    }, 10000);
+  </script>
+  
+  <script type="module">
+  import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAzSUI6ofOyN9hy2oNAqr2sukG8G4YngbM",
+    authDomain: "tugasakhirr-8bd0a.firebaseapp.com",
+    projectId: "tugasakhirr-8bd0a",
+    storageBucket: "tugasakhirr-8bd0a.appspot.com",
+    messagingSenderId: "1073743837170",
+    appId: "1:1073743837170:web:2e5a419331d95dd2d79d6b",
+    measurementId: "G-J5TQS4TKME"
+  };
+
+  // Cek apakah sudah ada instance Firebase yang aktif
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      console.log("User logged in:", user.uid);
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        console.log("User data:", data);
+
+        document.getElementById("userNameDisplay").textContent = data.nama || "User";
+        
+      } else {
+        alert("Data pengguna tidak ditemukan di Firestore.");
+      }
+    } else {
+      console.log("Tidak ada user login. Redirect ke login.");
+      window.location.href = "1login.html";
+    }
+  });
+</script>
+<script type="module" src="js/firebaseconfig.js"></script>
+
+</body>
+</html>

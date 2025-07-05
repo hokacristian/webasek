@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Sign Up | Rice Moisture Monitoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background-image: url('graphic-node-dm-9lIgr_K0-unsplash.jpg');
+      background-size: cover;
+      background-position: center;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 18px;
+      letter-spacing: 1px;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .signup-container {
+      background-color: rgba(165, 107, 42, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 490px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 35px;
+      margin-bottom: 10px;
+    }
+
+    .logo-img {
+    max-width: 350px;  
+    height: auto;     
+    display: block;
+    margin: 0 auto 20px auto; 
+    margin-bottom: 10px;
+   }
+
+    label {
+      display: block;
+      color: #fff;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    
+    input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 8px;
+  background-color: #6b2400;
+  color: #fff;
+  font-size: 15px;
+  font-family: 'Open Sans', sans-serif;
+  letter-spacing: 1px;
+}
+
+
+    input::placeholder {
+      color: #fff;
+      opacity: 0.5;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: right;
+      margin-top: 18px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      color: #fff;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .btn-login {
+      background-color: #6c757d;
+    }
+
+    .btn-register {
+      background-color: #079e2a;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+    @media (max-width: 480px) {
+      .signup-container {
+        padding: 20px;
+      }
+      .btn {
+        font-size: 14px;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-container">
+    <img src="ricemoisturefix.png" alt="Logo" class="logo-img" />
+
+      <form>
+    <label for="nama">Nama</label>
+    <input type="text" id="nama" placeholder="Nama lengkap" required>
+    
+    <label for="gudang">Nama Gudang Penyimpanan</label>
+    <input type="text" id="gudang" placeholder="Nama gudang" required>
+    
+    <label for="username">Email</label>
+    <input type="email" id="username" placeholder="Email" required>
+    
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Password" required>
+    
+    <label for="konfirmasi">Konfirmasi Password</label>
+    <input type="password" id="konfirmasi" placeholder="Ulangi password" required>
+    
+    <div class="button-group">
+      <button type="button" id="registerBtn" class="btn btn-register">Register</button>
+    </div>
+    </form>
+
+      
+  </div>
+  
+  <script type="module" src="js/signup.js"></script>
+
+</body>
+</html>

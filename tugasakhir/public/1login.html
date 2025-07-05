@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login | Rice Moisture Monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+ <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Open Sans, sans-serif;
+    }
+
+    body {
+      background-image: url('graphic-node-dm-9lIgr_K0-unsplash.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-container {
+      background-color: rgba(165, 107, 42, 0.95); 
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      width: 450px;
+    }
+
+    .login-container h1 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 10px;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+      font-size: 35px;
+      text-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+    }
+
+    .login-container p {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 30px;
+    }  
+
+      .logo-img {
+    max-width: 350px;  
+    height: auto;     
+    display: block;
+    margin: 0 auto 20px auto; 
+   }
+
+    label {
+      color: #fff;
+      font-weight: bold;
+      font-size: 18px;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #a35e00;
+      color: #fff;
+      font-size: 16px;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    input::placeholder {
+      color: #fff;
+      opacity: 0.5;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap:50px;
+      margin-top: 15px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      color: #fff;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .btn-login {
+      background-color: #079e2a;
+    }
+
+    .btn-signup {
+      background-color: #c50115;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="ricemoisturefix.png" alt="Logo" class="logo-img" />
+    
+    <form id="loginForm">
+      <label for="loginUsername">Email</label>
+      <input type="text" id="loginUsername" placeholder="Masukkan Email">
+    
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" placeholder="Masukkan password">
+    
+      <div class="button-group">
+        <button type="button" class="btn btn-signup" onclick="window.location.href='1-1signup.html'">Sign Up</button>
+        <button type="button" class="btn btn-login" id="loginBtn">Login</button>
+      </div>
+    </form>
+    
+  </div>
+  <script type="module" src="js/login.js"></script>
+
+  
+</body>
+</html>

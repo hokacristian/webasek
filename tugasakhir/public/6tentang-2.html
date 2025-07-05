@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tentang - Dosen Pembimbing | Rice Moisture Monitoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+          box-sizing: border-box;
+        }    
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #2e2e2e;
+    }
+
+    .background-wrapper, .overlay {
+      position: fixed;
+      width: 100%;
+      height: 100%; 
+      z-index: -1;
+    }
+
+    .background-wrapper {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      z-index: -2;
+    }
+
+    .overlay {background-color: rgba(255, 255, 255, 0.4);}
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      transition: margin-left 0.3 ease;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #a58b21;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      transition: width 0.3s;
+    }
+
+    .sidebar.collapsed {
+      width: 100px;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      margin-bottom: 20px;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      font-family: 'Open Sans', sans-serif;
+      cursor: pointer;
+      letter-spacing: 1.5px;
+    }
+
+    .logo-img {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .sidebar.collapsed .logo-img {
+      display: none;
+    }
+
+    .sidebar.collapsed a {
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+    }
+
+    .sidebar.collapsed a span {
+      display: none;
+    }  
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #4d0f0f;
+      border-radius: 20px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+    }
+    
+    .sidebar a span{
+      font-size: 16px;
+      display: inline-block;
+    }
+
+    .sidebar a:hover, .sidebar a.active {
+      background-color: #a03030;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+      transition: margin-left 0.3s;
+    }
+
+    .collapsed + .main-content { margin-left: 60px; }
+
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header .user-info {
+      text-align: right;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      color: #1f1f1f;
+      margin-top: 1px;
+      margin-bottom: 10px;
+    }
+
+    .tentang-title {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      text-align: center;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 35px;
+      color: #5c1212;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+    }
+
+    .developer-section {
+      margin-top: 30px;
+      text-align: center;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .developer-list {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+      font-size: 18px;
+      text-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+    }
+
+    .developer {
+      text-align: center;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .developer img {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 4px solid #a58b21;
+    }
+
+    .developer p {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .team-button {
+      background-color: #a58b21;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 19px;
+      border: none;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .nav-prev {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #a58b21;
+      color: white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      text-align: center;
+      line-height: 50px;
+      font-size: 24px;
+      text-decoration: none;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        overflow-x: auto;
+      }
+
+      .sidebar.collapsed {
+        width: 100% !important;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <!-- WRAPPER BACKGROUND -->
+  <div class="background-wrapper">
+    <div class="overlay"></div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="toggle-btn" onclick="toggleSidebar()">☰</button> 
+        <img src="ricemoisturefix.png" alt="Logo" class="logo-img" />
+      </div>
+      <a href="2home.html">🏠<span> Beranda</span></a>
+      <a href="3datasensor.html">📊<span> Data Sensor</span></a>
+      <a href="4monitoring.html">📡<span> Monitoring Langsung</span></a>
+      <a href="5grafik.html">📈<span> Grafik dan Laporan</span></a>
+      <a href="6tentang-1.html" class="active">ℹ️<span> Tentang</span></a>
+      <a href="1login.html">🚪<span> Keluar</span></a>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1>Sistem Pengukuran Kadar Air Beras</h1>
+        <div class="user-info">
+          <p><strong id="userNameDisplay">Memuat...</strong></p>
+        </div>
+      </div>
+
+      <div class="tentang-title">Tentang</div>
+
+      <div class="developer-section">
+        <button class="team-button">Tim Pengembang</button>
+
+        <div class="developer-list">
+          <div class="developer">
+            <img src="paadya.jpg" alt="Prof. Dr. Aloysius Adya Pramudita S.T., M.T.">
+            <p>Prof. Dr. Aloysius Adya Pramudita S.T., M.T.</p>
+          </div>
+          <div class="developer">
+            <img src="pavinsen.jpg" alt="Vinsensius Sigit Widhi Prabowo S.T., M.T.">
+            <p>Vinsensius Sigit Widhi Prabowo S.T., M.T.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANAH KIRI -->
+  <a href="6tentang-1.html" class="nav-prev">❮</a>
+
+  <!--side bar collapsed-->
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const container = document.querySelector('.container');
+      sidebar.classList.toggle('collapsed');
+      container.classList.toggle('sidebar-collapsed');
+    }
+    
+  </script>  
+  <script type="module">
+  import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAzSUI6ofOyN9hy2oNAqr2sukG8G4YngbM",
+    authDomain: "tugasakhirr-8bd0a.firebaseapp.com",
+    projectId: "tugasakhirr-8bd0a",
+    storageBucket: "tugasakhirr-8bd0a.appspot.com",
+    messagingSenderId: "1073743837170",
+    appId: "1:1073743837170:web:2e5a419331d95dd2d79d6b",
+    measurementId: "G-J5TQS4TKME"
+  };
+
+  // Cek apakah sudah ada instance Firebase yang aktif
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      console.log("User logged in:", user.uid);
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        console.log("User data:", data);
+
+        document.getElementById("userNameDisplay").textContent = data.nama || "User";
+        
+        
+      } else {
+        alert("Data pengguna tidak ditemukan di Firestore.");
+      }
+    } else {
+      console.log("Tidak ada user login. Redirect ke login.");
+      window.location.href = "1login.html";
+    }
+  });
+</script>
+<script type="module" src="js/firebaseconfig.js"></script>
+</body>
+</html>

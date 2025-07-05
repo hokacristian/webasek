@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home | Rice Moisture Monitoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Open Sans', sans-serif;
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #2e2e2e;
+    }
+
+    .background-wrapper,
+    .overlay {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .background-wrapper {
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      z-index: -2;
+    }
+
+    .overlay {
+      background-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      transition: margin-left 0.3s ease;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #a58b21;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      font-family: 'Open Sans', sans-serif;
+      transition: width 0.3s;
+    }
+
+    .sidebar.collapsed {
+      width: 100px;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      margin-bottom: 20px;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1.5px;
+    }
+
+    .logo-img {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .sidebar.collapsed .logo-img {
+      display: none;
+    }
+
+    .sidebar.collapsed a {
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+    }
+
+    .sidebar.collapsed a span {
+      display: none;
+    }
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #4d0f0f;
+      border-radius: 20px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .sidebar a span {
+      font-size: 16px;
+      display: inline-block;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: #a03030;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+      transition: margin-left 0.3s;
+    }
+
+    .collapsed+.main-content {
+      margin-left: 60px;
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header .user-info {
+      text-align: right;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .header h1 {
+      font-size: 35px;
+      color: #1f1f1f;
+      margin-bottom: 10px;
+      margin-top: 1px;
+    }
+
+    .lokasi-section {
+      margin-top: 10px;
+    }
+
+    .lokasi-section>div {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin-top: 80px;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1.5px;
+    }
+
+    .lokasi-card {
+      display: flex;
+      background-color: #807000;
+      border-radius: 15px;
+      padding: 15px;
+      color: white;
+      width: 100%;
+      max-width: 488px;
+    }
+
+    .lokasi-card img {
+      width: 130px;
+      height: auto;
+      border-radius: 8px;
+      margin-right: 15px;
+    }
+
+    .kadar-air-chart {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin-left: 50px;
+    }
+
+    .chart-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-size: 25px;
+      font-weight: bold;
+      font-family: 'Open Sans', sans-serif;
+      color: #2e2e2e;
+      transition: all 0.3s ease;
+    }
+
+    .chart-center.loading {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .chart-center span {
+      display: block;
+      font-size: 16px;
+      font-weight: normal;
+      font-family: 'Open Sans', sans-serif;
+      font-weight: bold;
+    }
+
+    .chart-status {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+    }
+
+    .chart-status.normal {
+      background-color: #4CAF50;
+    }
+
+    .chart-status.tidak_normal {
+      background-color: #f44336;
+    }
+
+    .chart-status.loading {
+      background-color: #ff9800;
+    }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      margin-top: 80px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .feature-card {
+      background-color: #a58b21;
+      border-radius: 15px;
+      padding: 10px;
+      width: 100%;
+      max-width: 288px;
+      text-align: center;
+      color: white;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .feature-card img {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .feature-card button {
+      margin-top: 10px;
+      background-color: #4d0f0f;
+      color: white;
+      padding: 5px 10px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 15px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      letter-spacing: 1px;
+      transition: background-color 0.3s ease;
+    }
+
+    .feature-card button:hover {
+      background-color: #a03030;
+    }
+
+    .connection-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+
+    .connection-indicator.connected {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .connection-indicator.disconnected {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .connection-indicator.connecting {
+      background-color: #FF9800;
+      color: white;
+    }
+
+    .last-update {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: #666;
+      font-style: italic;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        overflow-x: auto;
+      }
+
+      .sidebar.collapsed {
+        width: 100% !important;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+
+      .kadar-air-chart {
+        margin-left: 0;
+        margin-top: 20px;
+      }
+
+      .lokasi-section>div {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .connection-indicator {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin: 10px auto;
+        text-align: center;
+        width: fit-content;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- WRAPPER BACKGROUND -->
+  <div class="background-wrapper">
+    <div class="overlay"></div>
+  </div>
+
+  <!-- Connection Indicator -->
+  <div id="connectionIndicator" class="connection-indicator connecting">🔄 Loading...</div>
+
+  <div class="container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        <img src="ricemoisturefix.png" alt="Logo" class="logo-img" />
+      </div>
+      <a href="2home.html" class="active">🏠<span> Beranda</span></a>
+      <a href="3datasensor.html">📊<span> Data Sensor</span></a>
+      <a href="4monitoring.html">📡<span> Monitoring Langsung</span></a>
+      <a href="5grafik.html">📈<span> Grafik dan Laporan</span></a>
+      <a href="6tentang-1.html">ℹ️<span> Tentang</span></a>
+      <a href="1login.html">🚪<span> Keluar</span></a>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1>Sistem Pengukuran Kadar Air Beras</h1>
+        <div class="user-info">
+          <p><strong id="userNameDisplay">Memuat...</strong></p>
+        </div>
+      </div>
+
+      <div class="lokasi-section">
+        <div style="display: flex; align-items: center;">
+          <div class="lokasi-card">
+            <img src="gudang_beras_yogyakarta.jpg" alt="Gudang" />
+            <div>
+              <h3 id="namaGudang">Gudang Penyimpanan</h3>
+            </div>
+          </div>
+
+          <div class="kadar-air-chart">
+            <canvas id="moistureChart" width="150" height="150"></canvas>
+            <div id="chartStatus" class="chart-status loading">Loading...</div>
+            <div id="chartCenter" class="chart-center loading">
+              ---%<br />
+              <span>Kadar Air (Water Content)</span>
+            </div>
+            <div id="lastUpdate" class="last-update">Terakhir update: --</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="features">
+        <div class="feature-card">
+          <div style="font-size: 48px;">📊</div>
+          <button onclick="window.location.href='3datasensor.html'">Data Sensor</button>
+        </div>
+        <div class="feature-card">
+          <div style="font-size: 48px;">📡</div>
+          <button onclick="window.location.href='4monitoring.html'">Monitoring Langsung</button>
+        </div>
+        <div class="feature-card">
+          <div style="font-size: 48px;">📈</div>
+          <button onclick="window.location.href='5grafik.html'">Grafik dan Laporan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // KONFIGURASI - NANOVNA BACKEND SEPERTI DI MONITORING PAGE
+    // =====================================================
+
+    const NANOVNA_BACKEND_URL = 'http://localhost:3000';
+
+    // =====================================================
+
+    let chart = null;
+    let isConnected = false;
+    let pollingInterval = null;
+
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const container = document.querySelector('.container');
+      sidebar.classList.toggle('collapsed');
+      container.classList.toggle('sidebar-collapsed');
+    }
+
+    // Initialize Chart.js
+    function initializeChart() {
+      const ctx = document.getElementById('moistureChart').getContext('2d');
+
+      chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Kadar Air', 'Sisa'],
+          datasets: [{
+            data: [0, 100],
+            backgroundColor: ['#e0e0e0', '#f5f5f5'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          cutout: '70%',
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
+          animation: {
+            animateRotate: true,
+            duration: 1000
+          }
+        }
+      });
+    }
+
+    // Update chart with new data
+    function updateChart(moistureValue, status) {
+      if (!chart) return;
+
+      // Update chart data
+      chart.data.datasets[0].data = [moistureValue, 100 - moistureValue];
+
+      // Update colors based on status
+      const colors = {
+        normal: ['#4CAF50', '#e8f5e8'],
+        tidak_normal: ['#f44336', '#fdeaea']
+      };
+
+      chart.data.datasets[0].backgroundColor = colors[status] || ['#ff9800', '#fff3e0'];
+      chart.update('active');
+
+      // Update center text
+      const chartCenter = document.getElementById('chartCenter');
+      chartCenter.innerHTML = `${moistureValue}%<br /><span>Kadar Air (Water Content)</span>`;
+      chartCenter.classList.remove('loading');
+
+      // Update status indicator
+      const chartStatus = document.getElementById('chartStatus');
+      chartStatus.textContent = status === 'normal' ? 'Normal' : ' Normal';
+      chartStatus.className = `chart-status ${status}`;
+    }
+
+    // Update connection status
+    function updateConnectionStatus(status) {
+      const indicator = document.getElementById('connectionIndicator');
+
+      switch (status) {
+        case 'connected':
+          indicator.textContent = '✅ Connected to NanoVNA Backend';
+          indicator.className = 'connection-indicator connected';
+          isConnected = true;
+          break;
+        case 'disconnected':
+          indicator.textContent = '❌ Disconnected from NanoVNA Backend';
+          indicator.className = 'connection-indicator disconnected';
+          isConnected = false;
+          break;
+        case 'connecting':
+          indicator.textContent = '🔄 Connecting to NanoVNA Backend...';
+          indicator.className = 'connection-indicator connecting';
+          isConnected = false;
+          break;
+      }
+    }
+
+    // Update moisture data display
+    function updateMoistureDisplay(data) {
+      const moistureValue = data.water_content_percent || 0;
+      const status = moistureValue >= 10 && moistureValue <= 13 ? 'normal' : 'tidak_normal';
+      
+      updateChart(moistureValue, status);
+
+      // Update last update timestamp  
+      const lastUpdate = document.getElementById('lastUpdate');
+      const timestamp = new Date(data.timestamp).toLocaleString('id-ID');
+      lastUpdate.textContent = `Terakhir update: ${timestamp}`;
+
+      console.log('📊 Chart updated with NanoVNA data:', data);
+    }
+
+    // =====================================================
+    // NANOVNA BACKEND FUNCTIONS
+    // =====================================================
+
+    async function loadRealtimeWaterContent() {
+      try {
+        const response = await fetch(`${NANOVNA_BACKEND_URL}/api/realtime-water-content`);
+        
+        if (response.ok) {
+          updateConnectionStatus('connected');
+          const result = await response.json();
+          
+          if (result.success && result.data) {
+            updateMoistureDisplay(result.data);
+          } else {
+            console.log('ℹ️ No water content data available');
+            updateChart(0, 'loading');
+          }
+        } else {
+          throw new Error(`HTTP ${response.status}`);
+        }
+      } catch (error) {
+        console.error('❌ Error loading water content data:', error);
+        updateConnectionStatus('disconnected');
+      }
+    }
+
+    async function testNanoVNAConnection() { 
+      try {
+        const response = await fetch(`${NANOVNA_BACKEND_URL}/`);
+        const data = await response.json();
+        
+        console.log('✅ NanoVNA connection test successful (home):', data);
+        return true;
+      } catch (error) {
+        console.error('❌ NanoVNA connection test failed (home):', error);
+        return false;
+      }
+    }
+
+    function startRealtimePolling() {
+      console.log('🔄 Starting NanoVNA realtime polling (home)...');
+      updateConnectionStatus('connecting');
+      
+      // Load initial data
+      loadRealtimeWaterContent();
+      
+      // Poll every 5 seconds
+      pollingInterval = setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          loadRealtimeWaterContent();
+        }
+      }, 5000);
+      
+      window.addEventListener('beforeunload', () => {
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+        }
+      });
+    }
+
+
+    // =====================================================
+    // INITIALIZATION
+    // =====================================================
+
+    function initializeBackend() {
+      console.log('🔄 Using NanoVNA backend mode (home)');
+      testNanoVNAConnection().then(isConnected => {
+        if (isConnected) {
+          startRealtimePolling();
+        } else {
+          updateConnectionStatus('disconnected');
+          updateChart(0, 'loading');
+        }
+      });
+    }
+
+    // Initialize everything when page loads
+    window.addEventListener('load', () => {
+      console.log('🚀 Initializing home page...');
+
+      // Initialize chart first
+      initializeChart();
+
+      // Initialize NanoVNA backend connection
+      setTimeout(initializeBackend, 1000);
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    });
+
+    // Debug function
+    function debugChart() {
+      console.log('=== DEBUG CHART ===');
+      console.log('Chart initialized:', !!chart);
+      console.log('Is connected:', isConnected);
+      console.log('Polling interval:', !!pollingInterval);
+      
+      testNanoVNAConnection();
+    }
+
+    window.debugChart = debugChart;
+  </script>
+
+  <script type="module">
+    import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzSUI6ofOyN9hy2oNAqr2sukG8G4YngbM",
+      authDomain: "tugasakhirr-8bd0a.firebaseapp.com",
+      projectId: "tugasakhirr-8bd0a",
+      storageBucket: "tugasakhirr-8bd0a.appspot.com",
+      messagingSenderId: "1073743837170",
+      appId: "1:1073743837170:web:2e5a419331d95dd2d79d6b",
+      measurementId: "G-J5TQS4TKME"
+    };
+
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        console.log("User logged in:", user.uid);
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          console.log("User data:", data);
+
+          document.getElementById("userNameDisplay").textContent = data.nama || "User";
+          document.getElementById("namaGudang").textContent = data.namaGudang || "Gudang";
+
+        } else {
+          alert("Data pengguna tidak ditemukan di Firestore.");
+        }
+      } else {
+        console.log("Tidak ada user login. Redirect ke login.");
+        window.location.href = "1login.html";
+      }
+    });
+  </script>
+</body>
+
+</html>

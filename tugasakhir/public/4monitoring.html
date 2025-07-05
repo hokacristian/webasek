@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitoring Langsung | Rice Moisture Monitoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Open Sans, sans-serif;
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #2e2e2e;
+    }
+
+    .background-wrapper,
+    .overlay {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .background-wrapper {
+      background: url('graphic-node-dm-9lIgr_K0-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      z-index: -2;
+    }
+
+    .overlay {
+      background-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      transition: margin-left 0.3s ease;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #a58b21;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      font-family: 'Open Sans', sans-serif;
+      transition: width 0.3s;
+    }
+
+    .sidebar.collapsed {
+      width: 100px;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      margin-bottom: 20px;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .logo-img {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .sidebar.collapsed .logo-img {
+      display: none;
+    }
+
+    .sidebar.collapsed a {
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+    }
+
+    .sidebar.collapsed a span {
+      display: none;
+    }
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #4d0f0f;
+      border-radius: 20px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .sidebar a span {
+      font-size: 16px;
+      display: inline-block;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: #a03030;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+      transition: margin-left 0.3s;
+    }
+
+    .collapsed+.main-content {
+      margin-left: 60px;
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header .user-info {
+      text-align: right;
+      font-family: 'Open Sans', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .header h1 {
+      font-size: 35px;
+      color: #1f1f1f;
+      margin-bottom: 10px;
+      margin-top: 1px;
+    }
+
+    .monitoring-title {
+      font-family: 'Open Sans', sans-serif;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-size: 35px;
+      color: #5c1212;
+      font-weight: bold;
+      letter-spacing: 1.0px;
+      text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .monitoring-card {
+      margin-top: 10px;
+      background-color: #6a681d;
+      color: white;
+      border-radius: 15px;
+      padding: 20px;
+      max-width: 900px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+      margin-bottom: 20px;
+      letter-spacing: 1.0px;
+    }
+
+    .monitoring-card img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .monitoring-card .location {
+      font-size: 20px;
+      font-weight: bold;
+      color: #d4ff6a;
+      margin-bottom: 10px;
+    }
+
+    .monitoring-card .content {
+      margin-top: 5px;
+      margin-bottom: 15px;
+      font-size: 15px;
+    }
+
+    .monitoring-card .address {
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    .monitoring-card .label {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 10px;
+      margin-bottom: 5px;
+      letter-spacing: 1.5px;
+    }
+
+    .monitoring-card .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      background-color: rgb(0, 209, 0);
+      border-radius: 50%;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+    }
+
+    .dot.normal {
+      background-color: rgb(0, 209, 0);
+    }
+
+    .dot.warning {
+      background-color: rgb(255, 165, 0);
+    }
+
+    .dot.critical {
+      background-color: rgb(209, 0, 0);
+    }
+
+    .btn-update {
+      background-color: #4d0f0f;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 25px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      font-family: 'Open Sans', sans-serif;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-update:hover {
+      background-color: #a03030;
+    }
+
+    .btn-update:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+
+    .progress-bar {
+      background-color: #ccc;
+      height: 10px;
+      border-radius: 5px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .progress {
+      height: 100%;
+      background-color: maroon;
+      width: 0%;
+      transition: width 0.5s ease, background-color 0.3s ease;
+    }
+
+    .progress.normal {
+      background-color: #4CAF50;
+    }
+
+    .progress.warning {
+      background-color: #FF9800;
+    }
+
+    .progress.critical {
+      background-color: #f44336;
+    }
+
+    .connection-status {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+
+    .connection-status.connected {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .connection-status.disconnected {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .connection-status.connecting {
+      background-color: #FF9800;
+      color: white;
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: #ccc;
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    .additional-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+      padding: 15px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .info-item {
+      text-align: center;
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: #ccc;
+      margin-bottom: 5px;
+    }
+
+    .info-value {
+      font-size: 16px;
+      font-weight: bold;
+      color: #d4ff6a;
+    }
+
+    .config-warning {
+      background-color: #fff3cd;
+      color: #856404;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px;
+      border: 1px solid #ffeaa7;
+      text-align: center;
+      display: none;
+    }
+
+    .config-warning.show {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        overflow-x: auto;
+      }
+
+      .sidebar.collapsed {
+        width: 100% !important;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+
+      .connection-status {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin: 10px 0;
+        text-align: center;
+      }
+
+      .additional-info {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- WRAPPER BACKGROUND -->
+  <div class="background-wrapper">
+    <div class="overlay"></div>
+  </div>
+
+  <!-- Connection Status Indicator -->
+  <div id="connectionStatus" class="connection-status connecting">🔄 Initializing NanoVNA Backend...</div>
+
+  <!-- Configuration Warning -->
+  <div id="configWarning" class="config-warning">
+    ⚠️ <strong>Backend Configuration:</strong> 
+    Pastikan NanoVNA Express.js backend sudah berjalan di localhost:3000
+    <br><br>
+    <strong>Start Backend:</strong> <code>npm run dev</code> di folder backend
+  </div>
+
+  <div class="container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        <img src="ricemoisturefix.png" alt="Logo" class="logo-img" />
+      </div>
+      <a href="2home.html">🏠 <span>Beranda</span></a>
+      <a href="3datasensor.html">📊 <span>Data Sensor</span></a>
+      <a href="4monitoring.html" class="active">📡 <span>Monitoring Langsung</span></a>
+      <a href="5grafik.html">📈 <span>Grafik dan Laporan</span></a>
+      <a href="6tentang-1.html">ℹ️ <span>Tentang</span></a>
+      <a href="1login.html">🚪 <span>Keluar</span></a>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1>Sistem Pengukuran Kadar Air Beras</h1>
+        <div class="user-info">
+          <p><strong id="userNameDisplay">Memuat...</strong></p>
+        </div>
+      </div>
+
+      <div class="monitoring-title">Monitoring NanoVNA Real-time</div>
+
+      <div class="monitoring-card">
+        <img src="gudangberas.png" alt="Gudang Gedebage">
+        <div>
+          <h3 id="namaGudang">Gudang Penyimpanan - NanoVNA Sensor</h3>
+        </div>
+        
+        <div class="label">Kadar Air (Water Content)</div>
+        <div class="progress-bar">
+          <div id="progressBar" class="progress" style="width:0%;"></div>
+        </div>
+        <div id="moistureContent" class="content"> %</div>
+
+        <div class="label">Return Loss</div>
+        <div id="returnLoss" class="content">-- dB</div>
+
+        <div class="label">Status</div>
+        <div class="status">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">Menunggu koneksi NanoVNA...</span>
+        </div>
+
+        <!-- Additional Technical Information -->
+        <div class="additional-info">
+          <div class="info-item">
+            <div class="info-label">Frequency</div>
+            <div id="frequency" class="info-value">-- GHz</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">VSWR</div>
+            <div id="vswr" class="info-value">--</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Session ID</div>
+            <div id="sessionId" class="info-value">--</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Measurement ID</div>
+            <div id="measurementId" class="info-value">--</div>
+          </div>
+        </div>
+
+        <div id="lastUpdate" class="timestamp">Terakhir update: --</div>
+
+        <button id="btnUpdate" class="btn-update" onclick="requestMoistureUpdate()" disabled>🔄 Perbarui Data NanoVNA</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // NANOVNA BACKEND CONFIGURATION
+    // =====================================================
+    
+    const NANOVNA_BACKEND_URL = 'http://localhost:3000';
+    
+    let isConnected = false;
+    let pollingInterval = null;
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const container = document.querySelector('.container');
+      sidebar.classList.toggle('collapsed');
+      container.classList.toggle('sidebar-collapsed');
+    }
+
+    // =====================================================
+    // CONNECTION & STATUS MANAGEMENT
+    // =====================================================
+
+    function updateConnectionStatus(status) {
+      const statusElement = document.getElementById('connectionStatus');
+      const btnUpdate = document.getElementById('btnUpdate');
+
+      switch (status) {
+        case 'connected':
+          statusElement.textContent = '✅ Connected to NanoVNA Backend';
+          statusElement.className = 'connection-status connected';
+          if (btnUpdate) btnUpdate.disabled = false;
+          isConnected = true;
+          break;
+        case 'disconnected':
+          statusElement.textContent = '❌ NanoVNA Backend Disconnected';
+          statusElement.className = 'connection-status disconnected';
+          if (btnUpdate) btnUpdate.disabled = true;
+          isConnected = false;
+          break;
+        case 'connecting':
+          statusElement.textContent = '🔄 Connecting to NanoVNA Backend...';
+          statusElement.className = 'connection-status connecting';
+          if (btnUpdate) btnUpdate.disabled = true;
+          isConnected = false;
+          break;
+      }
+    }
+
+    // =====================================================
+    // MOISTURE DATA DISPLAY
+    // =====================================================
+
+    function updateMoistureDisplay(data) {
+      const progressBar = document.getElementById('progressBar');
+      const moistureContent = document.getElementById('moistureContent');
+      const returnLoss = document.getElementById('returnLoss');
+      const frequency = document.getElementById('frequency');
+      const vswr = document.getElementById('vswr');
+      const sessionId = document.getElementById('sessionId');
+      const measurementId = document.getElementById('measurementId');
+      const statusDot = document.getElementById('statusDot');
+      const statusText = document.getElementById('statusText');
+      const lastUpdate = document.getElementById('lastUpdate');
+
+      // Update moisture content
+      moistureContent.textContent = data.water_content_percent + '%';
+      
+      // Update return loss
+      returnLoss.textContent = data.return_loss_db.toFixed(2) + ' dB';
+      
+      // Update frequency
+      frequency.textContent = data.frequency_ghz + ' GHz';
+      
+      // Update VSWR
+      vswr.textContent = data.vswr ? data.vswr.toFixed(2) : '--';
+      
+      // Update IDs
+      sessionId.textContent = data.session_id || '--';
+      measurementId.textContent = data.measurement_id || '--';
+
+      // Update progress bar (scale 0-25% for rice moisture)
+      const progressWidth = Math.min((data.water_content_percent / 25) * 100, 100);
+      progressBar.style.width = progressWidth + '%';
+
+      // Determine status based on water content
+      let status = 'normal';
+      let statusMessage = 'Optimal';
+      
+      if (data.water_content_percent > 20) {
+        status = 'critical';
+        statusMessage = 'Terlalu Basah - Perlu Pengeringan';
+      } else if (data.water_content_percent > 15) {
+        status = 'warning';
+        statusMessage = 'Agak Tinggi - Perhatian';
+      } else if (data.water_content_percent < 10) {
+        status = 'warning';
+        statusMessage = 'Terlalu Kering';
+      }
+
+      // Update status indicators
+      statusText.textContent = statusMessage;
+      statusDot.className = `dot ${status}`;
+      progressBar.className = `progress ${status}`;
+
+      // Update timestamp
+      const timestamp = new Date(data.timestamp).toLocaleString('id-ID');
+      lastUpdate.textContent = `Terakhir update: ${timestamp}`;
+
+      console.log('📊 NanoVNA Data updated:', data);
+    }
+
+    // =====================================================
+    // NANOVNA BACKEND COMMUNICATION
+    // =====================================================
+
+    async function testBackendConnection() {
+      try {
+        const response = await fetch(`${NANOVNA_BACKEND_URL}/health`);
+        const data = await response.json();
+        
+        if (data.status === 'OK') {
+          console.log('✅ NanoVNA Backend connection test successful:', data);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('❌ NanoVNA Backend connection test failed:', error);
+        return false;
+      }
+    }
+
+    async function loadRealtimeWaterContent() {
+      try {
+        const response = await fetch(`${NANOVNA_BACKEND_URL}/api/realtime-water-content`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          updateConnectionStatus('connected');
+          updateMoistureDisplay(result.data);
+          
+          // Hide config warning if visible
+          document.getElementById('configWarning').classList.remove('show');
+        } else {
+          throw new Error(result.message || 'No data available');
+        }
+
+      } catch (error) {
+        console.error('❌ Error loading realtime water content:', error);
+        updateConnectionStatus('disconnected');
+        
+        // Show specific error messages
+        const statusText = document.getElementById('statusText');
+        if (error.message.includes('Failed to fetch')) {
+          statusText.textContent = 'Backend tidak terhubung';
+          document.getElementById('configWarning').classList.add('show');
+        } else if (error.message.includes('404')) {
+          statusText.textContent = 'Belum ada data NanoVNA';
+        } else {
+          statusText.textContent = 'Error: ' + error.message;
+        }
+      }
+    }
+
+    function startRealtimePolling() {
+      // Clear any existing interval
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+
+      updateConnectionStatus('connecting');
+      console.log('🔄 Starting NanoVNA realtime polling...');
+
+      // Load initial data
+      loadRealtimeWaterContent();
+
+      // Poll every 5 seconds for real-time updates
+      pollingInterval = setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          loadRealtimeWaterContent();
+        }
+      }, 5000);
+
+      console.log('✅ NanoVNA polling started (5 second interval)');
+    }
+
+    function requestMoistureUpdate() {
+      if (!isConnected) {
+        alert('Tidak terhubung ke backend NanoVNA. Periksa koneksi.');
+        return;
+      }
+
+      const btnUpdate = document.getElementById('btnUpdate');
+      btnUpdate.disabled = true;
+      btnUpdate.textContent = '🔄 Membaca NanoVNA...';
+
+      loadRealtimeWaterContent().finally(() => {
+        setTimeout(() => {
+          btnUpdate.disabled = false;
+          btnUpdate.textContent = '🔄 Perbarui Data NanoVNA';
+        }, 2000);
+      });
+    }
+
+    // =====================================================
+    // INITIALIZATION
+    // =====================================================
+
+    async function initializeNanoVNABackend() {
+      console.log('🚀 Initializing NanoVNA monitoring system...');
+      
+      // Test backend connection
+      const isBackendRunning = await testBackendConnection();
+      
+      if (isBackendRunning) {
+        console.log('✅ NanoVNA Backend detected, starting realtime monitoring');
+        startRealtimePolling();
+      } else {
+        console.log('❌ NanoVNA Backend not available');
+        updateConnectionStatus('disconnected');
+        document.getElementById('configWarning').classList.add('show');
+        document.getElementById('statusText').textContent = 'Backend tidak tersedia';
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      setTimeout(initializeNanoVNABackend, 1000);
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    });
+
+    // Handle page visibility changes (pause polling when tab is hidden)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && pollingInterval) {
+        console.log('🔄 Page hidden, polling continues in background');
+      } else if (document.visibilityState === 'visible' && isConnected) {
+        console.log('🔄 Page visible, resuming active polling');
+        loadRealtimeWaterContent();
+      }
+    });
+
+    // Debug function for troubleshooting
+    function debugNanoVNA() {
+      console.log('=== NANOVNA DEBUG INFO ===');
+      console.log('Backend URL:', NANOVNA_BACKEND_URL);
+      console.log('Is Connected:', isConnected);
+      console.log('Polling Active:', !!pollingInterval);
+      
+      testBackendConnection().then(result => {
+        console.log('Backend Test Result:', result);
+      });
+    }
+
+    // Make debug available globally
+    window.debugNanoVNA = debugNanoVNA;
+  </script>
+
+  <script type="module">
+    import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzSUI6ofOyN9hy2oNAqr2sukG8G4YngbM",
+      authDomain: "tugasakhirr-8bd0a.firebaseapp.com",
+      projectId: "tugasakhirr-8bd0a",
+      storageBucket: "tugasakhirr-8bd0a.appspot.com",
+      messagingSenderId: "1073743837170",
+      appId: "1:1073743837170:web:2e5a419331d95dd2d79d6b",
+      measurementId: "G-J5TQS4TKME"
+    };
+
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        console.log("User logged in:", user.uid);
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          console.log("User data:", data);
+
+          document.getElementById("userNameDisplay").textContent = data.nama || "User";
+          document.getElementById("namaGudang").textContent = (data.namaGudang || "Gudang") + " - NanoVNA Sensor";
+
+        } else {
+          alert("Data pengguna tidak ditemukan di Firestore.");
+        }
+      } else {
+        console.log("Tidak ada user login. Redirect ke login.");
+        window.location.href = "1login.html";
+      }
+    });
+  </script>
+  <script type="module" src="js/firebaseconfig.js"></script>
+</body>
+</html>
