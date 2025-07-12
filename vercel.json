@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "tugasakhir/public/1login.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "tugasakhir/public/$1"
+    },
+    {
+      "src": "/",
+      "dest": "tugasakhir/public/1login.html"
+    }
+  ]
+}
